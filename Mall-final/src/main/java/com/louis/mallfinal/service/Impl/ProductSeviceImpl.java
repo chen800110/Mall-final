@@ -1,6 +1,7 @@
 package com.louis.mallfinal.service.Impl;
 
 import com.louis.mallfinal.dao.ProductDao;
+import com.louis.mallfinal.dto.ProductRequest;
 import com.louis.mallfinal.model.Product;
 import com.louis.mallfinal.service.ProductSevice;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,5 +16,10 @@ public class ProductSeviceImpl implements ProductSevice {
     @Override
     public Product getProductById(Integer ProductId) {
         return productDao.getProductById(ProductId);
+    }
+
+    @Override
+    public Integer createProduct(ProductRequest productRequest) {
+        return productDao.createProduct(productRequest);
     }
 }
