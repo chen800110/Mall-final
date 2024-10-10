@@ -3,7 +3,12 @@ package com.louis.mallfinal.dao;
 import com.louis.mallfinal.dto.ProductRequest;
 import com.louis.mallfinal.model.Product;
 
+import java.util.List;
+
 public interface ProductDao {
+
+    List<Product> getProducts();
+
     Product getProductById(Integer ProductId);
 
     Integer createProduct(ProductRequest productRequest);
