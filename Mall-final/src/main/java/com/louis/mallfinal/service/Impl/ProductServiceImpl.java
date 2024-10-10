@@ -1,5 +1,6 @@
 package com.louis.mallfinal.service.Impl;
 
+import com.louis.mallfinal.constant.ProductCategory;
 import com.louis.mallfinal.dao.ProductDao;
 import com.louis.mallfinal.dto.ProductRequest;
 import com.louis.mallfinal.model.Product;
@@ -16,8 +17,8 @@ public class ProductServiceImpl implements ProductService {
     private ProductDao productDao;
 
     @Override
-    public List<Product> getProducts() {
-        return productDao.getProducts();
+    public List<Product> getProducts(ProductCategory category,String search) {
+        return productDao.getProducts(category,search);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.louis.mallfinal.dao.impl;
 
+import com.louis.mallfinal.constant.ProductCategory;
 import com.louis.mallfinal.dao.ProductDao;
 import com.louis.mallfinal.dto.ProductRequest;
 import com.louis.mallfinal.model.Product;
@@ -24,85 +25,100 @@ public class ProductDaoImpl implements ProductDao {
     private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     @Override
-    public List<Product> getProducts() {
-        String sql = "select product_id,product_name, category, image_url, price, stock, description,created_date, last_modified_date FROM product";
-        Map<String,Object>map=new HashMap<>();
-        List<Product>productList=namedParameterJdbcTemplate.query(sql,new ProductRowMapper());
-        return productList;
-
-    }
-
-    @Override
-    public Product getProductById(Integer ProductId) {
-        String sql = "SELECT product_id,product_name, category, image_url, price, stock, description, " +
+    public List<Product> getProducts(ProductCategory category,String search) {
+        String sql = "SELECT product_id, product_name, category, image_url, price, stock, description, " +
                 "created_date, last_modified_date " +
-                "FROM product WHERE product_id = :productId";
-        Map<String, Object> map = new HashMap<>();
-        map.put("productId", ProductId);
-        List<Product> productList = namedParameterJdbcTemplate.query(sql, map, new ProductRowMapper());
+                "FROM product WHERE 1=1";
 
-        if (productList.size() > 0) {
-            return productList.get(0);
-        }else {
-            return null;
+        Map<String, Object> map = new HashMap<>();
+
+        if (category != null) {
+            sql = sql + " AND category = :category";
+            map.put("category", category.name());
         }
 
+        if (search != null) {
+            sql = sql + " AND product_name LIKE :search";
+            map.put("search", "%"+search+"%");
+
+        }
+        List<Product> productList = namedParameterJdbcTemplate.query(sql, map, new ProductRowMapper());
+
+        return productList;
     }
+
 
     @Override
-    public Integer createProduct(ProductRequest productRequest) {
-        String sql = "INSERT INTO product(product_name,category,image_url,price,stock," +
-                "description,created_date,last_modified_date) " +
-                "VALUES (:productName, :category, :imageUrl, :price, :stock, :description, " +
-                ":createdDate, :lastModifiedDate)";
+        public Product getProductById (Integer ProductId){
+            String sql = "SELECT product_id,product_name, category, image_url, price, stock, description, " +
+                    "created_date, last_modified_date " +
+                    "FROM product WHERE product_id = :productId";
+            Map<String, Object> map = new HashMap<>();
+            map.put("productId", ProductId);
+            List<Product> productList = namedParameterJdbcTemplate.query(sql, map, new ProductRowMapper());
 
-        Map<String, Object> map = new HashMap<>();
-        map.put("productName", productRequest.getProductName());
-        map.put("category", productRequest.getCategory().name());
-        map.put("imageUrl", productRequest.getImageUrl());
-        map.put("price", productRequest.getPrice());
-        map.put("stock", productRequest.getStock());
-        map.put("description", productRequest.getDescription());
+            if (productList.size() > 0) {
+                return productList.get(0);
+            } else {
+                return null;
+            }
 
-        Date now = new Date();
-        map.put("createdDate", now);
-        map.put("lastModifiedDate", now);
+        }
 
-        KeyHolder keyHolder = new GeneratedKeyHolder();
+        @Override
+        public Integer createProduct (ProductRequest productRequest){
+            String sql = "INSERT INTO product(product_name,category,image_url,price,stock," +
+                    "description,created_date,last_modified_date) " +
+                    "VALUES (:productName, :category, :imageUrl, :price, :stock, :description, " +
+                    ":createdDate, :lastModifiedDate)";
 
-        namedParameterJdbcTemplate.update(sql , new MapSqlParameterSource(map), keyHolder);
+            Map<String, Object> map = new HashMap<>();
+            map.put("productName", productRequest.getProductName());
+            map.put("category", productRequest.getCategory().name());
+            map.put("imageUrl", productRequest.getImageUrl());
+            map.put("price", productRequest.getPrice());
+            map.put("stock", productRequest.getStock());
+            map.put("description", productRequest.getDescription());
 
-        int productId = keyHolder.getKey().intValue();
+            Date now = new Date();
+            map.put("createdDate", now);
+            map.put("lastModifiedDate", now);
 
-        return productId;
+            KeyHolder keyHolder = new GeneratedKeyHolder();
+
+            namedParameterJdbcTemplate.update(sql, new MapSqlParameterSource(map), keyHolder);
+
+            int productId = keyHolder.getKey().intValue();
+
+            return productId;
+        }
+
+        @Override
+        public void updateProduct (Integer productId, ProductRequest productRequest){
+            String sql = "UPDATE product SET product_name = :productName, category = :category, " +
+                    "image_url = :imageUrl, price = :price, stock = :stock, description = :description, " +
+                    "last_modified_date = :lastModifiedDate WHERE product_id = :productId";
+
+            Map<String, Object> map = new HashMap<>();
+            map.put("productId", productId);
+
+            map.put("productName", productRequest.getProductName());
+            map.put("category", productRequest.getCategory().name());
+            map.put("imageUrl", productRequest.getImageUrl());
+            map.put("price", productRequest.getPrice());
+            map.put("stock", productRequest.getStock());
+            map.put("description", productRequest.getDescription());
+
+            map.put("lastModifiedDate", new Date());
+
+            namedParameterJdbcTemplate.update(sql, map);
+        }
+
+        @Override
+        public void deleteProductById (Integer ProductId){
+            String sql = "DELETE FROM product WHERE product_id = :productId";
+            Map<String, Object> map = new HashMap<>();
+            map.put("productId", ProductId);
+            namedParameterJdbcTemplate.update(sql, map);
+        }
     }
-
-    @Override
-    public void updateProduct(Integer productId, ProductRequest productRequest) {
-        String sql = "UPDATE product SET product_name = :productName, category = :category, " +
-                "image_url = :imageUrl, price = :price, stock = :stock, description = :description, " +
-                "last_modified_date = :lastModifiedDate WHERE product_id = :productId";
-
-        Map<String, Object> map = new HashMap<>();
-        map.put("productId", productId);
-
-        map.put("productName", productRequest.getProductName());
-        map.put("category", productRequest.getCategory().name());
-        map.put("imageUrl", productRequest.getImageUrl());
-        map.put("price", productRequest.getPrice());
-        map.put("stock", productRequest.getStock());
-        map.put("description", productRequest.getDescription());
-
-        map.put("lastModifiedDate", new Date());
-
-        namedParameterJdbcTemplate.update(sql , map);
-    }
-
-    @Override
-    public void deleteProductById(Integer ProductId) {
-        String sql = "DELETE FROM product WHERE product_id = :productId";
-        Map<String, Object> map = new HashMap<>();
-        map.put("productId", ProductId);
-        namedParameterJdbcTemplate.update(sql, map);
-    }
-}
