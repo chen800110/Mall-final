@@ -4,7 +4,9 @@ import com.louis.mallfinal.dao.ProductDao;
 import com.louis.mallfinal.dto.ProductQueryParams;
 import com.louis.mallfinal.dto.ProductRequest;
 import com.louis.mallfinal.model.Product;
+import com.louis.mallfinal.model.User;
 import com.louis.mallfinal.rowmapper.ProductRowMapper;
+import com.louis.mallfinal.rowmapper.UserRowMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -84,6 +86,23 @@ public class ProductDaoImpl implements ProductDao {
             }
 
         }
+
+        @Override
+        public User getUserByEmail(String email){
+        String sql = "select user_id,email,password,created_date,last_modified_date from product where email = :email";
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("email", email);
+
+        List<User> userList = namedParameterJdbcTemplate.query(sql, map, new UserRowMapper());
+
+        if (userList.size() > 0) {
+            return userList.get(0);
+        }else {
+            return null;
+        }
+    }
+
 
         @Override
         public Integer createProduct (ProductRequest productRequest){
