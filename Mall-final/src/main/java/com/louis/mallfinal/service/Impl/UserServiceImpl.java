@@ -4,6 +4,7 @@ package com.louis.mallfinal.service.Impl;
 import com.louis.mallfinal.dao.UserDao;
 import com.louis.mallfinal.dto.UserRegisterRequest;
 import com.louis.mallfinal.model.User;
+import com.louis.mallfinal.model.UserLoginRequest;
 import com.louis.mallfinal.service.UserService;
 
 import org.slf4j.ILoggerFactory;
@@ -27,6 +28,7 @@ public class UserServiceImpl implements UserService {
         return userDao.getUserById(userId);
     }
 
+
     @Override
     public Integer register(UserRegisterRequest userRegisterRequest) {
         User user=userDao.getUserByEmail(userRegisterRequest.getEmail());
@@ -35,9 +37,25 @@ public class UserServiceImpl implements UserService {
             log.warn("該Email{}已經被註冊",userRegisterRequest.getEmail());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-    //創建帳號
+
+    //創建帳號  
         return userDao.createUser(userRegisterRequest);
     }
 
 
+    @Override
+    public User login(UserLoginRequest userLoginRequest) {
+        User user=userDao.getUserByEmail(userLoginRequest.getEmail());
+
+        if(user==null){
+            log.warn("該Email{}尚未申請",userLoginRequest.getEmail());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+        if(user.getPassword().equals(userLoginRequest.getPassword())){
+            return user;
+        }else {
+            log.warn("Email{}密碼錯誤",userLoginRequest.getEmail());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+    }
 }
