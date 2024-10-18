@@ -16,11 +16,11 @@ public interface ProductDao {
 
     Product getProductById(Integer ProductId);
 
-    User getUserByEmail(String email);
-
     Integer createProduct(ProductRequest productRequest);
 
     void updateProduct(Integer ProductId, ProductRequest productRequest);
+
+    void updateStock(Integer productId, Integer stock);
 
     void deleteProductById(Integer ProductId);
 }
