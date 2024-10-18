@@ -4,6 +4,7 @@ import com.louis.mallfinal.dao.OrderDao;
 import com.louis.mallfinal.dao.ProductDao;
 import com.louis.mallfinal.dto.BuyItem;
 import com.louis.mallfinal.dto.CreateOrderRequest;
+import com.louis.mallfinal.model.Order;
 import com.louis.mallfinal.model.OrderItem;
 import com.louis.mallfinal.model.Product;
 import com.louis.mallfinal.service.OrderService;
@@ -23,6 +24,17 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private ProductDao productDao;
+
+
+    @Override
+    public Order getOrderById(Integer orderId) {
+        Order order = orderDao.getOrderById(orderId);
+
+        List<OrderItem>orderItemList=orderDao.getOrderItemsByOrderId(orderId);
+
+        order.setOrderItemList(orderItemList);
+        return order;
+    }
 
     @Transactional
     @Override
@@ -45,9 +57,9 @@ public class OrderServiceImpl implements OrderService {
 
             orderItemList.add(orderItem);
         }
-            //創建訂單
-            Integer orderId = orderDao.createOrder(userId, totalAmount);
-            orderDao.createOrderItem(orderId, orderItemList);
-            return orderId;
-        }
+        //創建訂單
+        Integer orderId = orderDao.createOrder(userId, totalAmount);
+        orderDao.createOrderItem(orderId, orderItemList);
+        return orderId;
     }
+}
