@@ -5,6 +5,7 @@ import com.louis.mallfinal.dao.ProductDao;
 import com.louis.mallfinal.dao.UserDao;
 import com.louis.mallfinal.dto.BuyItem;
 import com.louis.mallfinal.dto.CreateOrderRequest;
+import com.louis.mallfinal.dto.OrderQueryParams;
 import com.louis.mallfinal.model.Order;
 import com.louis.mallfinal.model.OrderItem;
 import com.louis.mallfinal.model.Product;
@@ -25,39 +26,57 @@ import java.util.List;
 @Component
 public class OrderServiceImpl implements OrderService {
 
-    private final static Logger log= (Logger) LoggerFactory.getLogger(OrderServiceImpl.class);
+    private final static Logger log = LoggerFactory.getLogger(OrderServiceImpl.class);
 
     @Autowired
     private OrderDao orderDao;
 
     @Autowired
-    private UserDao userDao;
-
-    @Autowired
     private ProductDao productDao;
 
+    @Autowired
+    private UserDao userDao;
+
+    @Override
+    public Integer countOrder(OrderQueryParams orderQueryParams) {
+        return orderDao.countOrder(orderQueryParams);
+    }
 
     @Override
     public Order getOrderById(Integer orderId) {
         Order order = orderDao.getOrderById(orderId);
 
-        List<OrderItem>orderItemList=orderDao.getOrderItemsByOrderId(orderId);
+        List<OrderItem> orderItemList = orderDao.getOrderItemsByOrderId(orderId);
 
         order.setOrderItemList(orderItemList);
+
         return order;
     }
 
+    @Override
+    public List<Order> getOrders(OrderQueryParams orderQueryParams) {
+        List<Order> orderList = orderDao.getOrders(orderQueryParams);
+
+        for (Order order : orderList) {
+            List<OrderItem> orderItemList = orderDao.getOrderItemsByOrderId(order.getOrderId());
+
+            order.setOrderItemList(orderItemList);
+        }
+
+        return orderList;
+    }
+
+    // 修改多個Table All or Never
     @Transactional
     @Override
     public Integer createOrder(Integer userId, CreateOrderRequest createOrderRequest) {
-        // 檢查使用者資訊
+        // 檢查 user 是否存在
         User user = userDao.getUserById(userId);
 
-        if(user == null) {
-            log.warn("userId {} 不存在", userId);
+        if (user == null) {
+            log.warn("該 userId {} 不存在", userId);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-
 
         int totalAmount = 0;
         List<OrderItem> orderItemList = new ArrayList<>();
@@ -65,17 +84,17 @@ public class OrderServiceImpl implements OrderService {
         for (BuyItem buyItem : createOrderRequest.getBuyItemList()) {
             Product product = productDao.getProductById(buyItem.getProductId());
 
-            if(product == null) {
-                log.warn("========");
+            // 檢查 product 是否存在、庫存是否足夠
+            if (product == null) {
                 log.warn("商品 {} 不存在", buyItem.getProductId());
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
             } else if (product.getStock() < buyItem.getQuantity()) {
-                log.warn("========");
-                log.warn("商品 {} 庫存不足，欲購數量：{}，剩餘數量：{}",
-                        buyItem.getProductId(), buyItem.getQuantity(), product.getStock());
+                log.warn("商品 {} 庫存數量不足，無法購買。剩餘庫存 {}，欲購買數量 {}",
+                        buyItem.getProductId(), product.getStock(), buyItem.getQuantity());
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
             }
-            // 扣除庫存
+
+            // 扣除商品庫存
             productDao.updateStock(product.getProductId(), product.getStock() - buyItem.getQuantity());
 
             // 計算總價錢
@@ -90,9 +109,11 @@ public class OrderServiceImpl implements OrderService {
 
             orderItemList.add(orderItem);
         }
-        //創建訂單
+
         Integer orderId = orderDao.createOrder(userId, totalAmount);
-        orderDao.createOrderItem(orderId, orderItemList);
+
+        orderDao.createOrderItems(orderId, orderItemList);
+
         return orderId;
     }
 }
