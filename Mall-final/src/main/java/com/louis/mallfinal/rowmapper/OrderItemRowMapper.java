@@ -14,6 +14,7 @@ public class OrderItemRowMapper implements RowMapper<OrderItem> {
         orderItem.setAmount(resultSet.getInt("amount"));
         orderItem.setProductId(resultSet.getInt("product_id"));
         orderItem.setOrderItemId(resultSet.getInt("order_item_id"));
+        orderItem.setOrderId(resultSet.getInt("order_id"));
 
         // left join product
         orderItem.setProductName(resultSet.getString("product_name"));
